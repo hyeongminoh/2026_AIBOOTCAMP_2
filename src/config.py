@@ -27,12 +27,29 @@ class AppSettings:
 
 @lru_cache
 def get_settings() -> AppSettings:
+    def _env(*names: str, default: str = "") -> str:
+        for name in names:
+            value = os.getenv(name)
+            if value:
+                return value.rstrip("/") if "ENDPOINT" in name else value
+        return default
+
     azure = AzureSettings(
-        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY", ""),
-        chat_deployment=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT", ""),
-        embedding_deployment=os.getenv("AZURE_OPENAI_EMBED_DEPLOYMENT", ""),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-05-01-preview"),
+        # 우선순위: AZURE_* > AOAI_*
+        endpoint=_env("AZURE_OPENAI_ENDPOINT", "AOAI_ENDPOINT"),
+        api_key=_env("AZURE_OPENAI_API_KEY", "AOAI_API_KEY"),
+        chat_deployment=_env(
+            "AZURE_OPENAI_CHAT_DEPLOYMENT",
+            "AOAI_DEPLOY_GPT4O_MINI",
+            "AOAI_DEPLOY_GPT4O",
+        ),
+        embedding_deployment=_env(
+            "AZURE_OPENAI_EMBED_DEPLOYMENT",
+            "AOAI_DEPLOY_EMBED_3_SMALL",
+            "AOAI_DEPLOY_EMBED_3_LARGE",
+            "AOAI_DEPLOY_EMBED_ADA",
+        ),
+        api_version=_env("AZURE_OPENAI_API_VERSION", default="2024-05-01-preview"),
     )
     return AppSettings(azure=azure)
 

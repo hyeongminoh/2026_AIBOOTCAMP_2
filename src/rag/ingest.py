@@ -1,43 +1,54 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Iterable, List
 
 from langchain.docstore.document import Document
-from langchain_openai import AzureOpenAIEmbeddings
+from langchain_community.document_loaders import JSONLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
 from src.config import get_settings
+from src.rag.embeddings import get_embeddings
 
 
 def load_json_corpus(path: Path, source_type: str) -> List[Document]:
-    with path.open() as f:
-        raw = json.load(f)
-    docs: List[Document] = []
-    for item in raw:
-        metadata = {
-            "title": item.get("title"),
-            "date": item.get("date"),
-            "source": item.get("source"),
-            "tags": ",".join(item.get("tags", [])),
-            "source_type": source_type,
-        }
-        text = item.get("body", "")
-        docs.append(Document(page_content=text, metadata=metadata))
-    return docs
+    def _metadata_func(record: dict, metadata: dict) -> dict:
+        metadata.update(
+            {
+                "title": record.get("title"),
+                "date": record.get("date"),
+                "source": record.get("source"),
+                "tags": ",".join(record.get("tags", [])),
+                "source_type": source_type,
+            }
+        )
+        return metadata
+
+    loader = JSONLoader(
+        file_path=str(path),
+        jq_schema=".[]",
+        content_key="body",
+        metadata_func=_metadata_func,
+    )
+    return loader.load()
+
+
+def split_docs(docs: List[Document]) -> List[Document]:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", "\n", " ", ""],
+    )
+    return splitter.split_documents(docs)
 
 
 def build_vectorstore(docs: Iterable[Document], persist_dir: Path) -> None:
     settings = get_settings()
-    embeddings = AzureOpenAIEmbeddings(
-        model=settings.azure.embedding_deployment,
-        azure_endpoint=settings.azure.endpoint,
-        api_key=settings.azure.api_key,
-        api_version=settings.azure.api_version,
-    )
-    Chroma.from_documents(list(docs), embedding=embeddings, persist_directory=str(persist_dir))
+    embeddings = get_embeddings()
+    split = split_docs(list(docs))
+    Chroma.from_documents(split, embedding=embeddings, persist_directory=str(persist_dir))
     persist_dir.mkdir(parents=True, exist_ok=True)
     print(f"[ingest] Vector store persisted to {persist_dir}")
 
@@ -55,6 +66,14 @@ def main() -> None:
         "--global-corpus", type=Path, default=Path(get_settings().global_corpus_path)
     )
     args = parser.parse_args()
+
+    appendix_path = Path("data/appendix-keywords.txt")
+    if appendix_path.exists():
+        file = appendix_path.read_text(encoding="utf-8")
+        print(f"[ingest] appendix-keywords loaded ({len(file)} chars)")
+    else:
+        file = ""
+        print("[ingest] appendix-keywords.txt not found (optional)")
 
     docs: List[Document] = []
     docs.extend(load_json_corpus(args.sk_corpus, source_type="sk"))
