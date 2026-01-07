@@ -1,38 +1,34 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import Iterable, List
 
 from langchain.docstore.document import Document
-from langchain_community.document_loaders import JSONLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 
 from src.config import get_settings
 from src.rag.embeddings import get_embeddings
 
 
 def load_json_corpus(path: Path, source_type: str) -> List[Document]:
-    def _metadata_func(record: dict, metadata: dict) -> dict:
-        metadata.update(
-            {
-                "title": record.get("title"),
-                "date": record.get("date"),
-                "source": record.get("source"),
-                "tags": ",".join(record.get("tags", [])),
-                "source_type": source_type,
-            }
-        )
-        return metadata
-
-    loader = JSONLoader(
-        file_path=str(path),
-        jq_schema=".[]",
-        content_key="body",
-        metadata_func=_metadata_func,
-    )
-    return loader.load()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    docs: List[Document] = []
+    for record in data:
+        body = record.get("body", "")
+        if not body:
+            continue
+        metadata = {
+            "title": record.get("title"),
+            "date": record.get("date"),
+            "source": record.get("source"),
+            "tags": ",".join(record.get("tags", [])),
+            "source_type": source_type,
+        }
+        docs.append(Document(page_content=body, metadata=metadata))
+    return docs
 
 
 def split_docs(docs: List[Document]) -> List[Document]:
