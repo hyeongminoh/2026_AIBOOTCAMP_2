@@ -1,0 +1,24 @@
+[
+  {
+    "title": "2026년 글로벌 AI 트렌드: Multi-Agent Orchestration이 주류",
+    "date": "2025-12-30",
+    "source": "TechCrunch",
+    "body": "대형 테크 기업들은 단일 LLM에서 벗어나 LangGraph, Crew 기반의 멀티 에이전트 오케스트레이션을 대규모 프로덕션에 도입하고 있다. 에이전트 간 계약 기반 메시징과 감사 가능한 상태 추적이 핵심 요구사항으로 부상했다.",
+    "tags": ["AI", "Multi-Agent", "LangGraph", "Observability"]
+  },
+  {
+    "title": "클라우드 2026 전망: 서버리스 GPU와 온디맨드 AI 가속",
+    "date": "2025-11-15",
+    "source": "Gartner",
+    "body": "클라우드 사업자들은 서버리스 GPU와 토큰 기반 과금 모델을 출시하며, 개발자 친화적인 AI 파이프라인 자동화 기능을 강조하고 있다. 오픈 모델과 AOAI 호환 API가 함께 제공되어 멀티클라우드 전략이 용이해진다.",
+    "tags": ["Cloud", "GPU", "Serverless", "AOAI"]
+  },
+  {
+    "title": "생성형 AI 보안: 모델 공급망 보안과 컨텍스트 필터링",
+    "date": "2025-09-21",
+    "source": "MIT Tech Review",
+    "body": "모델 공급망 보안과 컨텍스트 필터링이 기업 AI 보안의 핵심 과제로 부상했다. RAG 파이프라인에 대한 출처 검증, 프롬프트 주입 차단, 감사 로그 표준화가 주요 대응 전략으로 제시된다.",
+    "tags": ["Security", "GenAI", "RAG", "Filtering"]
+  }
+]
+

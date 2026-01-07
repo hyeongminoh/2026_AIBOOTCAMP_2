@@ -1,0 +1,24 @@
+[
+  {
+    "title": "SK텔레콤, 2026년 생성형 AI 기반 네트워크 자동화 로드맵 발표",
+    "date": "2025-12-18",
+    "source": "SKT newsroom",
+    "body": "SK텔레콤은 2026년까지 네트워크 운영 전 과정을 생성형 AI로 자동화하는 로드맵을 공개했다. 프라이빗 LLM을 활용한 트래픽 예측, 장애 대응 시뮬레이션 기능이 포함되며, 오픈 API를 통해 외부 파트너와 연동을 강화할 예정이다.",
+    "tags": ["SKT", "AI", "Network", "Automation", "LLM"]
+  },
+  {
+    "title": "SK하이닉스, HBM4 양산 준비와 함께 AI 반도체 생태계 강화",
+    "date": "2025-11-02",
+    "source": "Press release",
+    "body": "SK하이닉스는 HBM4 양산 준비에 맞춰 주요 클라우드 서비스 제공자와 협력해 AI 가속기 최적화 테스트를 진행 중이다. CXL 메모리 기반의 대용량 AI 서버 레퍼런스를 제공해 파트너십을 확대한다.",
+    "tags": ["SK hynix", "HBM", "AI", "Memory", "CXL"]
+  },
+  {
+    "title": "SK C&C, LangGraph 기반 멀티 에이전트 플랫폼 PoC 착수",
+    "date": "2025-10-12",
+    "source": "SK C&C blog",
+    "body": "SK C&C는 LangGraph를 활용한 멀티 에이전트 플랫폼 PoC를 시작했다고 밝혔다. AOAI 임베딩과 사내 데이터 레이크를 연동하여 산업별 분석 에이전트를 제공할 계획이다.",
+    "tags": ["SK C&C", "LangGraph", "Agent", "RAG", "AOAI"]
+  }
+]
+

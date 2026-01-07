@@ -1,0 +1,25 @@
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+
+# Env files
+.env
+
+# Data / vector stores
+data/chroma/
+
+# Streamlit / cache
+.streamlit/
+.cache/
+
+# Logs
+*.log
+
