@@ -19,7 +19,7 @@ ICONS = {
 }
 
 LOGO_PATH = "src/ui/SKLOGO.png"
-API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 
 def _inject_css():
