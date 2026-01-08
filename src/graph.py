@@ -48,7 +48,10 @@ def plan_node(state: AgentState) -> AgentState:
         if intent in {"trend", "alignment"} and requires_global is None:
             requires_global = True
         if requires_alignment is None:
-            requires_alignment = intent == "alignment"
+            # 둘 다 필요하면 정합성도 기본적으로 수행
+            requires_alignment = intent == "alignment" or (requires_sk and requires_global)
+        if not requires_sk and not requires_global and not requires_alignment:
+            intent = "chitchat"
         return {
             "intent": intent,
             "requires_sk": bool(requires_sk),
@@ -145,6 +148,17 @@ def react_refine_node(state: AgentState) -> AgentState:
     return {**state, "logs": logs, "sk_docs": sk_docs, "global_docs": global_docs}
 
 
+def chat_node(state: AgentState) -> AgentState:
+    """
+    소규모/일반 대화: RAG가 필요 없는 경우 간단 답변만 생성.
+    """
+    llm = _llm()
+    chain = StrOutputParser()
+    # 단답/간결 지시
+    answer = llm.invoke(state["question"])
+    return {**state, "answer": chain.parse(answer)}
+
+
 def sk_rag_node(state: AgentState) -> AgentState:
     plan = state.get("plan", {})
     if not plan or not plan.get("requires_sk", True):
@@ -223,6 +237,7 @@ def format_node(state: AgentState) -> AgentState:
     history_text = "\n".join(
         [f"Q: {h.get('q')}\nA: {h.get('a')}" for h in history_items[-3:]]  # 최근 3개
     )
+    alignment_score = state.get("alignment_score")
     formatted = chain.invoke(
         {
             "question": state["question"],
@@ -230,7 +245,7 @@ def format_node(state: AgentState) -> AgentState:
             "sk_sources": sk_sources,
             "global_sources": global_sources,
             "alignment": state.get("alignment", ""),
-            "alignment_score": state.get("alignment_score", {}),
+            "alignment_score": alignment_score,
             "history": history_text,
         }
     )
@@ -241,6 +256,7 @@ def build_graph():
     graph = StateGraph(AgentState)
     graph.add_node("planner", plan_node)
     graph.add_node("react_refine", react_refine_node)
+    graph.add_node("chat", chat_node)
     graph.add_node("sk_rag", sk_rag_node)
     graph.add_node("global_rag", global_rag_node)
     graph.add_node("alignment_step", alignment_node)
@@ -250,13 +266,13 @@ def build_graph():
 
     def route_from_planner(state: AgentState) -> str:
         plan = state.get("plan", {})
-        if plan.get("requires_sk", True):
+        if plan.get("requires_sk", False):
             return "sk_rag"
-        if plan.get("requires_global", True):
+        if plan.get("requires_global", False):
             return "global_rag"
-        if plan.get("requires_alignment", True):
+        if plan.get("requires_alignment", False):
             return "alignment_step"
-        return "format"
+        return "chat"
 
     def route_from_sk(state: AgentState) -> str:
         plan = state.get("plan", {})
@@ -281,9 +297,11 @@ def build_graph():
             "global_rag": "global_rag",
             "alignment_step": "alignment_step",
             "format": "format",
+            "chat": "chat",
             "__else__": "format",
         },
     )
+    graph.add_edge("chat", "format")
     graph.add_conditional_edges(
         "sk_rag",
         route_from_sk,
