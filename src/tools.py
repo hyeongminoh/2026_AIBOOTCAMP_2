@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain_core.tools import tool
 
-from src.rag.retrievers import get_retriever
+from src.rag.retrievers import get_faiss_index
 
 
 def _apply_filters(filters: Optional[Dict[str, Any]], source_type: str) -> Dict[str, Any]:
@@ -30,9 +30,8 @@ def _apply_filters(filters: Optional[Dict[str, Any]], source_type: str) -> Dict[
 
 
 def _search(query: str, source_type: str, filters: Optional[Dict[str, Any]] = None, k: int = 3):
-    retriever = get_retriever()
-    where = _apply_filters(filters, source_type)
-    docs = retriever.similarity_search(query, k=k, filter=where)
+    index = get_faiss_index(source_type)
+    docs = index.similarity_search(query, k=k)
     results = []
     for d in docs:
         results.append(

@@ -7,7 +7,7 @@
 - Tool Calling: classify_query, search_sk_news, search_global_it(IT), score_alignment
 - ReAct 보조 검색: Planner 후 추가 검색 질의 정제/보강
 - Memory: 최근 Q/A를 Formatter에 주입
-- RAG: langchain_chroma + AOAI 임베딩, SK→IT 순으로 검색하며 SK 결과를 IT 검색 힌트로 전달
+- RAG: FAISS + AOAI 임베딩, SK→IT 순으로 검색하며 SK 결과를 IT 검색 힌트로 전달
 - UI/UX: Streamlit 실시간 배너(에이전트/툴 로그), 답변 카드, 질문 히스토리, 로고 적용
 - API: FastAPI `/ask`
 
@@ -38,9 +38,9 @@ $env:AZURE_OPENAI_API_VERSION="2024-05-01-preview"
 ```
 
 ## 벡터DB 생성 (선택)
-샘플 문서로 Chroma를 미리 생성:
+샘플 문서로 FAISS를 미리 생성:
 ```powershell
-python -m src.rag.ingest --persist-dir data/chroma
+python -m src.rag.ingest --persist-dir data/faiss
 ```
 없으면 첫 질의 시 in-memory로 빌드(임베딩 호출 발생).
 
@@ -72,7 +72,7 @@ streamlit run app.py
 - 26년 새롭게 떠오르는 생성형 AI 신규 모델은?
 
 ## 주의/참고
-- `langchain_chroma` 사용: 설치 안 된 경우 `pip install langchain-chroma==0.1.4`
+- FAISS 사용: Py3.12 환경에서 chroma 빌드 이슈가 있어 FAISS로 전환
 - AOAI 키는 코드에 하드코딩 금지, 환경변수만 사용
 - 샘플 데이터는 데모용, 실제 서비스 시 최신 데이터로 교체
 

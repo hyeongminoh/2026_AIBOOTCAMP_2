@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import List
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 
 from src.config import get_settings
 from src.rag.embeddings import get_embeddings
@@ -40,15 +41,24 @@ def _split_docs(docs: List[Document]) -> List[Document]:
 
 
 def get_retriever() -> Chroma:
-    settings = get_settings()
-    persist_dir = Path(settings.persist_dir)
-    embeddings = get_embeddings()
-    if persist_dir.exists():
-        return Chroma(persist_directory=str(persist_dir), embedding_function=embeddings)
+    raise NotImplementedError("Chroma retriever deprecated; use get_faiss_index instead.")
 
-    # fallback: in-memory build from seed docs
-    seed_docs: List[Document] = []
-    seed_docs.extend(_read_docs(Path(settings.sk_corpus_path), "sk"))
-    seed_docs.extend(_read_docs(Path(settings.global_corpus_path), "global"))
-    return Chroma.from_documents(_split_docs(seed_docs), embedding=embeddings)
+
+@lru_cache
+def get_faiss_index(source_type: str) -> FAISS:
+    settings = get_settings()
+    embeddings = get_embeddings()
+    index_dir = Path(settings.persist_dir) / source_type
+    if index_dir.exists():
+        return FAISS.load_local(
+            folder_path=str(index_dir),
+            embeddings=embeddings,
+            allow_dangerous_deserialization=True,
+        )
+    # fallback in-memory
+    docs = _read_docs(
+        Path(settings.sk_corpus_path if source_type == "sk" else settings.global_corpus_path),
+        source_type,
+    )
+    return FAISS.from_documents(_split_docs(docs), embedding=embeddings)
 

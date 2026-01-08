@@ -7,7 +7,7 @@ from typing import Iterable, List
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 
 from src.config import get_settings
 from src.rag.embeddings import get_embeddings
@@ -40,13 +40,12 @@ def split_docs(docs: List[Document]) -> List[Document]:
     return splitter.split_documents(docs)
 
 
-def build_vectorstore(docs: Iterable[Document], persist_dir: Path) -> None:
-    settings = get_settings()
+def build_vectorstore(split_docs: Iterable[Document], persist_dir: Path) -> None:
     embeddings = get_embeddings()
-    split = split_docs(list(docs))
-    Chroma.from_documents(split, embedding=embeddings, persist_directory=str(persist_dir))
     persist_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[ingest] Vector store persisted to {persist_dir}")
+    db = FAISS.from_documents(list(split_docs), embedding=embeddings)
+    db.save_local(folder_path=str(persist_dir))
+    print(f"[ingest] FAISS index persisted to {persist_dir}")
 
 
 def main() -> None:
@@ -71,10 +70,10 @@ def main() -> None:
         file = ""
         print("[ingest] appendix-keywords.txt not found (optional)")
 
-    docs: List[Document] = []
-    docs.extend(load_json_corpus(args.sk_corpus, source_type="sk"))
-    docs.extend(load_json_corpus(args.global_corpus, source_type="global"))
-    build_vectorstore(docs, args.persist_dir)
+    sk_docs: List[Document] = load_json_corpus(args.sk_corpus, source_type="sk")
+    gl_docs: List[Document] = load_json_corpus(args.global_corpus, source_type="global")
+    build_vectorstore(split_docs(sk_docs), args.persist_dir / "sk")
+    build_vectorstore(split_docs(gl_docs), args.persist_dir / "it")
 
 
 if __name__ == "__main__":

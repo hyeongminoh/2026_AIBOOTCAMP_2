@@ -20,7 +20,7 @@ class AzureSettings:
 @dataclass
 class AppSettings:
     azure: AzureSettings
-    persist_dir: str = "data/chroma"
+    persist_dir: str = "data/faiss"
     sk_corpus_path: str = "data/sk_news.json"
     global_corpus_path: str = "data/global_trends.json"
 
