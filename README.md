@@ -12,13 +12,13 @@
 - API: FastAPI `/ask`
 
 ## 폴더 구조
-- `app.py` : Streamlit 엔트리
+- `app.py` : Streamlit 엔트리(UI가 API 호출)
 - `server.py` : FastAPI 엔드포인트
 - `src/graph.py` : LangGraph 워크플로우
-- `src/agents/` : 역할별 프롬프트 (Planner/Alignment/Formatter)
+- `src/agents/` : 역할별 프롬프트
 - `src/rag/` : ingest/retriever/embedding 유틸
-- `src/ui/` : UI 렌더링, 상태 관리, 로고
-- `data/*.json` : 샘플 코퍼스, `data/chroma/` : 벡터DB(생성됨)
+- `src/ui/` : UI 렌더링, 상태/로고
+- `data/*.json` : 샘플 코퍼스, `data/faiss/` : FAISS 인덱스(생성됨)
 
 ## 사전 준비 (Windows PowerShell 예시)
 ```powershell
@@ -45,18 +45,21 @@ python -m src.rag.ingest --persist-dir data/faiss
 없으면 첫 질의 시 in-memory로 빌드(임베딩 호출 발생).
 
 ## 실행 방법
-1) FastAPI 서버를 먼저 실행:
+1) FastAPI 서버 실행 (포트 8001):
 ```powershell
-uvicorn server:app --reload --port 8000
+uvicorn server:app --host 0.0.0.0 --port 8001
 ```
-2) (필요 시) API_BASE_URL 설정 후 Streamlit 실행:
+2) Streamlit 실행 (API_BASE를 8001로 맞춤):
 ```powershell
-$env:API_BASE_URL="http://localhost:8000"  # 포트/호스트에 맞게 조정
-streamlit run app.py
+$env:API_BASE_URL="http://localhost:8001"
+streamlit run app.py --server.address=0.0.0.0 --server.port 8516
 ```
-`POST /ask` 예시:
-```json
-{ "question": "2026년 SK에서 새롭게 시도하는 기술은 무엇이며, 최신 IT 트렌드를 반영하는가?" }
+3) 접속/테스트
+- UI: http://localhost:8516
+- 헬스: http://localhost:8001/health
+- API: `POST /ask`
+```bash
+curl -X POST http://localhost:8001/ask -H "Content-Type: application/json" -d "{\"question\":\"테스트\"}"
 ```
 
 ## 동작 플로우 (간략)
@@ -76,8 +79,20 @@ streamlit run app.py
 - AOAI 키는 코드에 하드코딩 금지, 환경변수만 사용
 - 샘플 데이터는 데모용, 실제 서비스 시 최신 데이터로 교체
 
+## Docker 배포 (API+UI)
+### 단일 실행
+- FastAPI(8001): `docker build -f Dockerfile.api -t sk-agent-api .` → `docker run -p 8001:8001 sk-agent-api`
+- Streamlit(8516): `docker build -f Dockerfile.ui -t sk-agent-ui .` → `docker run -p 8516:8516 sk-agent-ui`
+
+### docker-compose (권장)
+```bash
+docker compose build
+docker compose up -d
+```
+- UI: http://localhost:8516
+- 헬스: http://localhost:8001/health
+
 ## 향후 개선 아이디어
-- Docker 패키징, 배포 스크립트 추가
 - RAG 품질 개선: 재랭커/하이브리드/날짜 스코어링(date_num) 등
 - 더 긴 메모리/대화 맥락 주입 및 Alignment에도 메모리 반영
 
