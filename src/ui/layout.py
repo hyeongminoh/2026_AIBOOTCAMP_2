@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import os
+from pathlib import Path
 from typing import List, Tuple
 
 import requests
@@ -18,7 +19,7 @@ ICONS = {
     "format": "🧩 Formatter",
 }
 
-LOGO_PATH = "src/ui/SKLOGO.png"
+LOGO_PATH = str((Path(__file__).parent / "SKLOGO.png").resolve())
 API_BASE = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 
@@ -42,6 +43,24 @@ def _inject_css():
         .answer-card .answer-body {
             white-space: pre-wrap;
             line-height: 1.5;
+        }
+        .example-card {
+            padding: 10px 12px;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #111827;
+            font-size: 0.95rem;
+            margin-top: 6px;
+        }
+        .info-card {
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #111827;
+            font-size: 0.95rem;
+            margin-top: 6px;
         }
         </style>
         """,
@@ -110,7 +129,7 @@ def render_main(question: str, main_col, side_col):
         answer_text = data.get("answer", "응답이 비어 있습니다.")
         agents = data.get("agents", [])
         tools = data.get("tools", [])
-        cleaned_answer = re.sub(r"\n{3,}", "\n\n", answer_text)
+        cleaned_answer = re.sub(r"\n\s*\n\s*\n+", "\n\n", answer_text).strip()
 
         if agents:
             agent_flow = " → ".join([ICONS.get(a, a) for a in agents])
@@ -130,7 +149,14 @@ def render_main(question: str, main_col, side_col):
         )
         st.session_state.history.append({"q": question, "a": answer_text})
         st.session_state.clear_input = True
-        st.success("완료")
+        st.markdown(
+            """
+            <div style="padding:8px 10px;border:1px solid #10b981;border-radius:8px;background:#ecfdf3;color:#065f46;font-weight:600;margin-top:6px;">
+                완료
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     except Exception as e:
         append_log(f"오류 발생: {e}", "error")
         st.error(f"오류 발생: {e}")
@@ -142,17 +168,17 @@ def render_page():
         layout="wide",
         page_icon=LOGO_PATH,
     )
-    header_cols = st.columns([1, 5])
+    header_cols = st.columns([1, 6])
     with header_cols[0]:
-        st.image(LOGO_PATH, width=80)
+        st.image(LOGO_PATH, width=72)
     with header_cols[1]:
         col_title, col_home = st.columns([6, 1])
         with col_title:
             st.title("SK TECH & IT TREND AGENT")
             st.caption("SK의 최신 경영 전략과 IT 트렌드를 한번에 분석할 수 있다면?")
         with col_home:
-            if st.button("홈 새로고침"):
-                st.experimental_rerun()
+            if st.button("🏠 HOME"):
+                st.rerun()
 
     _inject_css()
     ensure_state()
@@ -177,11 +203,21 @@ def render_page():
             key="question_input",
             placeholder=example,
         )
-        run_clicked = st.button("실행", type="primary")
+        st.markdown(
+            f"""
+            <div class="example-card">
+            <strong>예시 질문</strong><br>
+            1) SK 텔레콤의 26년 기술 전략과 그 전략이 최신의 AI기술에 얼마나 부합해?<br>
+            2) SK AX의 26년 경영전략은?<br>
+            3) 26년 새롭게 떠오르는 생성형AI의 신규 모델은?
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+        run_clicked = st.button("🚀 실행", type="primary")
     with col_side:
         st.empty()  # 사이드 공간 확보
 
     if run_clicked and question:
         render_main(question, col_main, col_side)
-    else:
-        st.info("예시: 2026년 SK 텔레콤에서 새롭게 시도하는 기술전략을 분석하고 최신 IT 트렌드 중 반영 안된 기술을 알려줘.")

@@ -16,6 +16,7 @@ venv/
 
 # Data / vector stores
 data/chroma/
+data/faiss/
 
 # Streamlit / cache
 .streamlit/
