@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: mihn0621/sk-news-aichatbot-api:v1
+        image: mihn0621/sk-news-aichatbot-api:v2
         ports:
         - containerPort: 8001
         resources:
